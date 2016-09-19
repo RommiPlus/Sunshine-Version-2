@@ -42,6 +42,11 @@ public class ForecastAdapter extends CursorAdapter {
         super(context, c, flags);
     }
 
+    private boolean mIsUseTodayLayout;
+    public void setUseTodayLayout(boolean isTrue) {
+        mIsUseTodayLayout = isTrue;
+    }
+
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
         // Choose the layout type
@@ -69,10 +74,24 @@ public class ForecastAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
 
+        int viewType = getItemViewType(cursor.getPosition());
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
+        int weatherId = cursor.getInt(ForecastFragment.COL_WEATHER_ID);
+        int drawableId = -1;
+        switch (viewType) {
+            case VIEW_TYPE_TODAY: {
+                drawableId = Utility.getArtResourceForWeatherCondition(weatherId);
+                break;
+            }
+            case VIEW_TYPE_FUTURE_DAY: {
+                drawableId = Utility.getIconResourceForWeatherCondition(weatherId);
+                break;
+            }
+        }
+
         // Use placeholder image for now
-        viewHolder.iconView.setImageResource(R.drawable.ic_launcher);
+        viewHolder.iconView.setImageResource(drawableId);
 
         // Read date from cursor
         long dateInMillis = cursor.getLong(ForecastFragment.COL_WEATHER_DATE);
@@ -98,7 +117,7 @@ public class ForecastAdapter extends CursorAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        return position == 0 ? VIEW_TYPE_TODAY : VIEW_TYPE_FUTURE_DAY;
+        return (position == 0 && mIsUseTodayLayout) ? VIEW_TYPE_TODAY : VIEW_TYPE_FUTURE_DAY;
     }
 
     @Override

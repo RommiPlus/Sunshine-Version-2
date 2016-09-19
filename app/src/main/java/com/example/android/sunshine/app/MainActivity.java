@@ -23,23 +23,41 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements DetailFragment.OnClickItemChangedListener {
 
+    public static final String DETAILFRAGMENT_TAG = "DF_TAG";
     private final String LOG_TAG = MainActivity.class.getSimpleName();
-    private final String FORECASTFRAGMENT_TAG = "FFTAG";
 
     private String mLocation;
+    private boolean mTwoPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mLocation = Utility.getPreferredLocation(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new ForecastFragment(), FORECASTFRAGMENT_TAG)
-                    .commit();
+
+        if (findViewById(R.id.weather_detail_container) != null) {
+            mTwoPane = true;
+
+            if (getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG) == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.weather_detail_container, new DetailFragment(), DETAILFRAGMENT_TAG)
+                        .commit();
+            }
+        } else {
+            mTwoPane = false;
+            getSupportActionBar().setElevation(0f);
         }
+
+        ForecastFragment fragment = (ForecastFragment)
+                getSupportFragmentManager().findFragmentById(R.id.fragment_forecast);
+        fragment.setUseTodayLayout(!mTwoPane);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
     }
 
     @Override
@@ -92,14 +110,41 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        String location = Utility.getPreferredLocation( this );
+        String location = Utility.getPreferredLocation(this);
         // update the location in our second pane using the fragment manager
         if (location != null && !location.equals(mLocation)) {
-            ForecastFragment ff = (ForecastFragment)getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
-            if ( null != ff ) {
+            ForecastFragment ff = (ForecastFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_forecast);
+            if (null != ff) {
                 ff.onLocationChanged();
             }
+
+            DetailFragment df = (DetailFragment) getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
+            if (null != df) {
+                df.onLocationChanged(location);
+            }
             mLocation = location;
+        }
+    }
+
+    @Override
+    public void onClickItem(Uri data) {
+        if (mTwoPane) {
+            DetailFragment fragment = (DetailFragment)
+                    getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
+            fragment.setData(data);
+        } else {
+            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+            intent.setData(data);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onNewDataReady(Uri data) {
+        if (mTwoPane) {
+            DetailFragment fragment = (DetailFragment)
+                    getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
+            fragment.setData(data);
         }
     }
 }

@@ -96,6 +96,19 @@ public class TestUtilities extends AndroidTestCase {
         return locationRowId;
     }
 
+    static ContentValues insertWeatherValues(Context context, long locationRowId) {
+        WeatherDbHelper dbHelper = new WeatherDbHelper(context);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        ContentValues testValues = TestUtilities.createWeatherValues(locationRowId);
+        long weatherRowId;
+        weatherRowId = db.insert(WeatherContract.WeatherEntry.TABLE_NAME, null, testValues);
+
+        // Verify we got a row back.
+        assertTrue("Error: Failure to insert North Pole Location Values", weatherRowId != -1);
+
+        return testValues;
+    }
+
     /*
         Students: The functions we provide inside of TestProvider use this utility class to test
         the ContentObserver callbacks using the PollingCheck class that we grabbed from the Android

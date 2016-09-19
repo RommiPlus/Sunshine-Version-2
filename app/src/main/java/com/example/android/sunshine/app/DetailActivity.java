@@ -17,6 +17,7 @@ package com.example.android.sunshine.app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,11 +29,24 @@ public class DetailActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+
         if (savedInstanceState == null) {
+            DetailFragment fragment = new DetailFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new DetailFragment())
+                    .add(R.id.weather_detail_container, fragment, MainActivity.DETAILFRAGMENT_TAG)
                     .commit();
         }
+
+        // enables the activity icon as a 'home' button. required if "android:targetSdkVersion" > 14
+        getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        if (fragment instanceof DetailFragment) {
+            ((DetailFragment) fragment).setData(getIntent().getData());
+        }
+        super.onAttachFragment(fragment);
     }
 
     @Override
@@ -47,10 +61,14 @@ public class DetailActivity extends ActionBarActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+
+            case android.R.id.home:
+                onBackPressed();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
