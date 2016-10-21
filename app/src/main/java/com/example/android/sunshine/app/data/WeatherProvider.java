@@ -25,7 +25,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
 public class WeatherProvider extends ContentProvider {
-    // TODO: Movie detail and movie review and movie video three tables inner join
 
     // The URI Matcher used by this content provider.
     private static final UriMatcher sUriMatcher = buildUriMatcher();

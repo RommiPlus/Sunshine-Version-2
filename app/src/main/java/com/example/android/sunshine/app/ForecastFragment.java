@@ -81,7 +81,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     private ForecastAdapter mForecastAdapter;
     private ListView mListView;
-    private int mPosition;
+    private int mPosition = ListView.INVALID_POSITION;
     private boolean mIsUseTodayLayout;
     private boolean mIsFirstLoad = true;
 
@@ -171,6 +171,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(FORECAST_LOADER, null, this);
+        setRetainInstance(true);
         super.onActivityCreated(savedInstanceState);
     }
 
