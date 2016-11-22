@@ -26,6 +26,7 @@
 
     <!-- Key name for storing location in SharedPreferences [CHAR LIMIT=NONE] -->
     <string name="pref_location_key" translatable="false">location</string>
+    <string name="pref_location_status" translatable="false">location_status</string>
 
     <!-- Default postal code for location preference [CHAR LIMIT=NONE] -->
     <string name="pref_location_default" translatable="false">94043</string>
@@ -93,4 +94,14 @@
     <string name="pref_enable_notifications_true"> Enabled</string>
     <string name="pref_enable_notifications_false">Not Enabled</string>
     <string name="pref_enable_notifications_default" translatable="false">false</string>
+    <string name="no_weather_info">No Weather Information Available</string>
+    <string name="location_status_unknown">location status unknown</string>
+    <string name="location_status_server_down">No weather information available. The server is not returning data.</string>
+    <string name="location_status_server_invalid">No weather information available. The server is not returning valid data. Please check for an updated version of Sunshine.</string>
+    <string name="network_error">The network is not available to fetch weather data</string>
+    <string name="empty_forecast_list_invalid_location">No weather information available. The location in settings is not recognized by the weather server.</string>
+
+    <!-- Strings used when displaying the state of the Location in settings -->
+    <string name="pref_location_error_description">Invalid Location (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
+    <string name="pref_location_unknown_description">Validating Location... (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
 </resources>

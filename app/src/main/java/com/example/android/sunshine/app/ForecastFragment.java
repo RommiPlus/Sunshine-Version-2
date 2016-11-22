@@ -16,9 +16,11 @@
 package com.example.android.sunshine.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -32,14 +34,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 
+import static com.example.android.sunshine.app.Utility.getPreferredLocation;
+
 /**
  * Encapsulates fetching the forecast and displaying it as a {@link ListView} layout.
  */
-public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final int FORECAST_LOADER = 0;
     // For the forecast view we're showing only a small subset of the stored data.
@@ -139,9 +144,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        TextView textView = (TextView) rootView.findViewById(R.id.empty_view);
+
         // Get a reference to the ListView, and attach this adapter to it.
         mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
         mListView.setAdapter(mForecastAdapter);
+        mListView.setEmptyView(textView);
 
         // We'll call our MainActivity
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -152,7 +160,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 // if it cannot seek to that position.
                 mPosition = position;
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
-                String locationSetting = Utility.getPreferredLocation(getActivity());
+                String locationSetting = getPreferredLocation(getActivity());
 
                 Uri dataUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
                         locationSetting, cursor.getLong(COL_WEATHER_DATE));
@@ -176,6 +184,20 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
+    public void onResume() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        sp.registerOnSharedPreferenceChangeListener(this);
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        sp.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         if (mPosition != ListView.INVALID_POSITION) {
             outState.putInt(SCROLL_POSITION, mPosition);
@@ -185,12 +207,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     // since we read the location when we create the loader, all we need to do is restart things
     void onLocationChanged() {
-        updateWeather();
         getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
-    }
-
-    private void updateWeather() {
-        SunshineSyncAdapter.syncImmediately(getActivity());
     }
 
     private void openPreferredLocationInMap() {
@@ -221,7 +238,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        String locationSetting = Utility.getPreferredLocation(getActivity());
+        String locationSetting = getPreferredLocation(getActivity());
 
         // Sort order:  Ascending, by date.
         String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
@@ -239,13 +256,16 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         mForecastAdapter.swapCursor(cursor);
-        if ((mPosition == ListView.INVALID_POSITION) || (!cursor.moveToFirst())) {
+        if (!cursor.moveToFirst()) {
+            updateEmptyView();
             return;
         }
+
 
         Log.v(TAG, "mIsFirstLoad: " + mIsFirstLoad);
         Log.v(TAG, "mPosition: " + mPosition);
         if (mIsFirstLoad) {
+            mPosition = 0;
             mListView.performItemClick(
                     mListView.getAdapter().getView(mPosition, null, null),
                     mPosition,
@@ -256,8 +276,41 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mListView.smoothScrollToPosition(mPosition);
     }
 
+    public void updateEmptyView() {
+        if (mForecastAdapter.getCount() == 0) {
+            TextView textView = (TextView) getView().findViewById(R.id.empty_view);
+            if (textView != null) {
+                int message = R.string.no_weather_info;
+                @SunshineSyncAdapter.LocationStatus int location = Utility.getLocationStauts(getActivity());
+                switch (location) {
+                    case SunshineSyncAdapter.LOCATION_STATUS_SERVER_DOWN:
+                        message = R.string.location_status_server_down;
+                        break;
+                    case SunshineSyncAdapter.LOCATION_STATUS_SERVER_INVALID:
+                        message = R.string.location_status_server_invalid;
+                        break;
+                    case SunshineSyncAdapter.LOCATION_STATUS_INVALID:
+                        message = R.string.empty_forecast_list_invalid_location;
+                        break;
+                    default:
+                        if (!Utility.isNetworkConnected(getActivity())) {
+                            message = R.string.network_error;
+                        }
+                }
+                textView.setText(message);
+            }
+        }
+    }
+
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mForecastAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getString(R.string.pref_location_status))) {
+            updateEmptyView();
+        }
     }
 }
