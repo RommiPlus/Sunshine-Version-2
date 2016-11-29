@@ -51,6 +51,7 @@ public class SettingsActivity extends PreferenceActivity
         // updated when the preference changes.
         bindPreferenceSummaryToValue(findPreference(getString(pref_location_key)));
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_units_key)));
+        bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_type_image)));
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -139,6 +140,9 @@ public class SettingsActivity extends PreferenceActivity
             SunshineSyncAdapter.syncImmediately(this);
         } else if (key.equals(getString(R.string.pref_units_key))) {
             // units have changed. update lists of weather entries accordingly
+            getContentResolver().notifyChange(WeatherContract.WeatherEntry.CONTENT_URI, null);
+        } else if ( key.equals(getString(R.string.pref_type_image)) ) {
+            // art pack have changed. update lists of weather entries accordingly
             getContentResolver().notifyChange(WeatherContract.WeatherEntry.CONTENT_URI, null);
         }
     }

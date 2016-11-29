@@ -16,4 +16,5 @@
     <dimen name="distance_4dp">4dp</dimen>
     <dimen name="distance_24dp">24dp</dimen>
     <dimen name="text_size_20sp">20dp</dimen>
+    <dimen name="notification_large_icon_default">48dp</dimen>
 </resources>

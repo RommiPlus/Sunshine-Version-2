@@ -19,6 +19,13 @@
         android:key="@string/pref_units_key"
         android:title="@string/pref_units_label"/>
 
+    <ListPreference
+        android:defaultValue="@string/pref_type_mono"
+        android:entries="@array/pref_type_image"
+        android:entryValues="@array/pref_type_image"
+        android:key="@string/pref_type_image"
+        android:title="@string/pref_image_types_title"/>
+
     <CheckBoxPreference
         android:defaultValue="@string/pref_enable_notifications_default"
         android:key="@string/pref_enable_notifications_key"

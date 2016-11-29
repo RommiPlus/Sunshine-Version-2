@@ -10,4 +10,9 @@
         <item>@string/pref_units_metric</item>
         <item>@string/pref_units_imperial</item>
     </string-array>
+
+    <string-array name="pref_type_image">
+        <item>@string/pref_type_colored</item>
+        <item>@string/pref_type_mono</item>
+    </string-array>
 </resources>
