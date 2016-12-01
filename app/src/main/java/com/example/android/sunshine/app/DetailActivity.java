@@ -43,7 +43,6 @@ public class DetailActivity extends AppCompatActivity {
         }
 
         // enables the activity icon as a 'home' button. required if "android:targetSdkVersion" > 14
-        getSupportActionBar().setHomeButtonEnabled(true);
     }
 
     @Override

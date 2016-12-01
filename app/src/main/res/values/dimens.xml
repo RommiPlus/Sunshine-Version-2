@@ -17,4 +17,7 @@
     <dimen name="distance_24dp">24dp</dimen>
     <dimen name="text_size_20sp">20dp</dimen>
     <dimen name="notification_large_icon_default">48dp</dimen>
+    <dimen name="distance_76dp">76dp</dimen>
+    <dimen name="distance_48dp">48dp</dimen>
+    <dimen name="forecast_detail_horizontal_padding">48dp</dimen>
 </resources>
