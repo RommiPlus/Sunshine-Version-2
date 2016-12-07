@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:columnCount="2">
+
+    <android.support.v4.widget.Space
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_columnSpan="2"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1" />
+
+    <!-- Header: Day, Date -->
+    <TextView
+        android:id="@+id/detail_day_textview"
+        android:layout_marginBottom="@dimen/distance_16dp"
+        android:layout_marginTop="@dimen/distance_16dp"
+        android:fontFamily="sans-serif-condensed"
+        android:gravity="center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/text_size_24sp"
+        app:layout_columnSpan="2"
+        app:layout_columnWeight="1"
+        app:layout_gravity="fill_horizontal"
+        tools:text="Tomorrow,June 24" />
+
+    <ImageView
+        android:id="@+id/detail_icon"
+        android:layout_width="0dp"
+        android:adjustViewBounds="true"
+        android:maxHeight="@dimen/distance_76dp"
+        android:maxWidth="@dimen/distance_76dp"
+        app:layout_columnWeight="1"
+        app:layout_gravity="fill_horizontal"
+        tools:src="@drawable/ic_launcher" />
+
+    <TextView
+        android:id="@+id/detail_high_textview"
+        android:layout_width="0dp"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/text_size_72sp"
+        app:layout_columnWeight="1"
+        app:layout_gravity="fill_horizontal"
+        tools:text="21°" />
+
+    <TextView
+        android:id="@+id/detail_forecast_textview"
+        android:layout_width="0dp"
+        android:fontFamily="sans-serif-condensed"
+        android:gravity="center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textColor="@color/text_grey"
+        app:layout_columnWeight="1"
+        tools:text="Clear" />
+
+    <TextView
+        android:id="@+id/detail_low_textview"
+        android:layout_width="0dp"
+        android:layout_marginBottom="@dimen/distance_16dp"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textColor="@color/text_grey"
+        android:textSize="@dimen/text_size_36sp"
+        app:layout_columnWeight="1"
+        tools:text="11°" />
+
+
+    <android.support.v4.widget.Space
+        app:layout_columnSpan="2"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1" />
+
+</android.support.v7.widget.GridLayout>

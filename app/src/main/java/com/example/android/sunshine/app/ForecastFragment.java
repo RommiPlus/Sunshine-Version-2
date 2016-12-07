@@ -266,10 +266,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         Log.v(TAG, "mPosition: " + mPosition);
         if (mIsFirstLoad) {
             mPosition = 0;
-            mListView.performItemClick(
-                    mListView.getAdapter().getView(mPosition, null, null),
-                    mPosition,
-                    mListView.getAdapter().getItemId(mPosition));
+//            mListView.performItemClick(
+//                    mListView.getAdapter().getView(mPosition, null, null),
+//                    mPosition,
+//                    mListView.getAdapter().getItemId(mPosition));
             mIsFirstLoad = false;
         }
 

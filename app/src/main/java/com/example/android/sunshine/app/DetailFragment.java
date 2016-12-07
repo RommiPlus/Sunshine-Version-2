@@ -24,7 +24,9 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ShareActionProvider;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -127,7 +129,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_detail_start, container, false);
         mIconView = (ImageView) rootView.findViewById(R.id.detail_icon);
         mFriendlyDateView = (TextView) rootView.findViewById(R.id.detail_day_textview);
         mDescriptionView = (TextView) rootView.findViewById(R.id.detail_forecast_textview);
@@ -173,25 +175,26 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Log.v(LOG_TAG, "In onCreateLoader");
-        if (mUri == null) {
-            return null;
+        if (mUri != null) {
+            // Now create and return a CursorLoader that will take care of
+            // creating a Cursor for the data being displayed.
+            return new CursorLoader(
+                    getActivity(),
+                    mUri,
+                    DETAIL_COLUMNS,
+                    null,
+                    null,
+                    null
+            );
         }
-
-        // Now create and return a CursorLoader that will take care of
-        // creating a Cursor for the data being displayed.
-        return new CursorLoader(
-                getActivity(),
-                mUri,
-                DETAIL_COLUMNS,
-                null,
-                null,
-                null
-        );
+        getView().setVisibility(View.INVISIBLE);
+        return null;
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data != null && data.moveToFirst()) {
+            getView().setVisibility(View.VISIBLE);
             // Read weather condition ID from cursor
             int weatherId = data.getInt(COL_WEATHER_CONDITION_ID);
             // Use placeholder Image
@@ -239,11 +242,34 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             // We still need this for the share intent
             mForecast = String.format("%s - %s - %s/%s", dateText, description, high, low);
 
-            // If onCreateOptionsMenu has already happened, we need to update the share intent now.
-            if (mShareActionProvider != null) {
-                mShareActionProvider.setShareIntent(createShareForecastIntent());
+            AppCompatActivity activity = (AppCompatActivity) getActivity();
+            Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
+
+            // We need to start the enter transition after the data has loaded
+            if (activity instanceof DetailActivity) {
+                activity.supportStartPostponedEnterTransition();
+
+                if (null != toolbarView) {
+                    activity.setSupportActionBar(toolbarView);
+
+                    activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
+                    activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                }
+            } else {
+                if (null != toolbarView) {
+                    Menu menu = toolbarView.getMenu();
+                    if (null != menu) menu.clear();
+                    toolbarView.inflateMenu(R.menu.detailfragment);
+                    finishCreatingMenu(toolbarView.getMenu());
+                }
             }
         }
+    }
+
+    private void finishCreatingMenu(Menu menu) {
+        // Retrieve the share menu item
+        MenuItem menuItem = menu.findItem(R.id.action_share);
+        menuItem.setIntent(createShareForecastIntent());
     }
 
     @Override
