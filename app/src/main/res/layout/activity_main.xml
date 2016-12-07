@@ -5,14 +5,17 @@
     android:orientation="vertical">
 
     <android.support.v7.widget.Toolbar
-        style="@style/CustomToolbar"
         android:id="@+id/toolbar"
+        style="@style/CustomToolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize">
+        android:layout_height="wrap_content">
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="?attr/listPreferredItemHeight"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="?attr/actionBarSize"
+            android:background="@color/primary"
             android:scaleType="center"
             android:src="@drawable/ic_logo" />
     </android.support.v7.widget.Toolbar>

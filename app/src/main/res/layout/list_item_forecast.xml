@@ -16,8 +16,8 @@
 
         <ImageView
             android:id="@+id/list_item_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="@dimen/list_icon"
+            android:layout_height="@dimen/list_icon"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
             tools:src="@drawable/ic_launcher" />
@@ -47,27 +47,24 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/list_item_high_textview"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="5"
-        android:orientation="vertical">
+        android:layout_weight="3"
+        android:fontFamily="sans-serif-condensed"
+        android:gravity="center"
+        android:textAppearance="?android:textAppearanceLarge"
+        tools:text="Text" />
 
-        <TextView
-            android:id="@+id/list_item_high_textview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-condensed"
-            android:textAppearance="?android:textAppearanceLarge"
-            tools:text="Text" />
-
-        <TextView
-            android:id="@+id/list_item_low_textview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-condensed"
-            android:textAppearance="?android:textAppearanceSmall"
-            tools:text="Text" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/list_item_low_textview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:fontFamily="sans-serif-condensed"
+        android:gravity="center"
+        android:textAppearance="?android:textAppearanceLarge"
+        tools:text="Text" />
 
 </LinearLayout>
