@@ -144,7 +144,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        TextView textView = (TextView) rootView.findViewById(R.id.empty_view);
+        TextView textView = (TextView) rootView.findViewById(R.id.listview_forecast_empty);
 
         // Get a reference to the ListView, and attach this adapter to it.
         mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
@@ -278,7 +278,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     public void updateEmptyView() {
         if (mForecastAdapter.getCount() == 0) {
-            TextView textView = (TextView) getView().findViewById(R.id.empty_view);
+            TextView textView = (TextView) getView().findViewById(R.id.listview_forecast_empty);
             if (textView != null) {
                 int message = R.string.no_weather_info;
                 @SunshineSyncAdapter.LocationStatus int location = Utility.getLocationStauts(getActivity());
