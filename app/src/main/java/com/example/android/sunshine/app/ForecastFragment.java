@@ -25,6 +25,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,7 +34,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -85,8 +86,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private static final String LOG_TAG = ForecastFragment.class.getSimpleName();
 
     private ForecastAdapter mForecastAdapter;
-    private ListView mListView;
-    private int mPosition = ListView.INVALID_POSITION;
+    private RecyclerView mRecyclerView;
+    private int mPosition = RecyclerView.NO_POSITION;
     private boolean mIsUseTodayLayout;
     private boolean mIsFirstLoad = true;
 
@@ -102,6 +103,27 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             mForecastAdapter.setUseTodayLayout(isTrue);
         }
     }
+
+    private ForecastAdapter.ForecastAdapterOnClickHandler
+            mListener = new ForecastAdapter.ForecastAdapterOnClickHandler() {
+        @Override
+        public void onClick(long date, ForecastAdapter.ForecastAdapterViewHolder viewHolder) {
+            // CursorAdapter returns a cursor at the correct position for getItem(), or null
+            // if it cannot seek to that position.
+            mPosition = viewHolder.getAdapterPosition();
+            String locationSetting = getPreferredLocation(getActivity());
+
+            Uri dataUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
+                    locationSetting, date);
+
+            if (mIsFirstLoad) {
+                ((DetailFragment.OnClickItemChangedListener) getActivity()).onNewDataReady(dataUri);
+                mIsFirstLoad = false;
+            } else {
+                ((DetailFragment.OnClickItemChangedListener) getActivity()).onClickItem(dataUri);
+            }
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -132,46 +154,28 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.v(TAG, "mPosition: " + mPosition);
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview_forecast);
+
+        // Set the layout manager
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        TextView emptyView = (TextView) rootView.findViewById(R.id.recyclerview_forecast_empty);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+
+        // The CursorAdapter will take data from our cursor and populate the ListView.
+        mForecastAdapter = new ForecastAdapter(getActivity(), null, mListener, emptyView);
+        mForecastAdapter.setUseTodayLayout(mIsUseTodayLayout);
+
+        // Get a reference to the ListView, and attach this adapter to it.
+        mRecyclerView.setAdapter(mForecastAdapter);
+
         if (savedInstanceState != null && savedInstanceState.containsKey(SCROLL_POSITION)) {
             mPosition = savedInstanceState.getInt(SCROLL_POSITION);
             Log.v(TAG, "mPosition: " + mPosition);
         }
-
-        // The CursorAdapter will take data from our cursor and populate the ListView.
-        mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
-        mForecastAdapter.setUseTodayLayout(mIsUseTodayLayout);
-
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        TextView textView = (TextView) rootView.findViewById(R.id.listview_forecast_empty);
-
-        // Get a reference to the ListView, and attach this adapter to it.
-        mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        mListView.setAdapter(mForecastAdapter);
-        mListView.setEmptyView(textView);
-
-        // We'll call our MainActivity
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                // CursorAdapter returns a cursor at the correct position for getItem(), or null
-                // if it cannot seek to that position.
-                mPosition = position;
-                Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
-                String locationSetting = getPreferredLocation(getActivity());
-
-                Uri dataUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                        locationSetting, cursor.getLong(COL_WEATHER_DATE));
-
-                if (mIsFirstLoad) {
-                    ((DetailFragment.OnClickItemChangedListener) getActivity()).onNewDataReady(dataUri);
-                } else {
-                    ((DetailFragment.OnClickItemChangedListener) getActivity()).onClickItem(dataUri);
-                }
-            }
-        });
 
         return rootView;
     }
@@ -255,30 +259,20 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        mForecastAdapter.swapCursor(cursor);
-        if (!cursor.moveToFirst()) {
-            updateEmptyView();
-            return;
+        mForecastAdapter.swapCursor(cursor)
+        ;
+        if (mPosition != RecyclerView.NO_POSITION) {
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            mRecyclerView.smoothScrollToPosition(mPosition);
         }
 
-
-        Log.v(TAG, "mIsFirstLoad: " + mIsFirstLoad);
-        Log.v(TAG, "mPosition: " + mPosition);
-        if (mIsFirstLoad) {
-            mPosition = 0;
-//            mListView.performItemClick(
-//                    mListView.getAdapter().getView(mPosition, null, null),
-//                    mPosition,
-//                    mListView.getAdapter().getItemId(mPosition));
-            mIsFirstLoad = false;
-        }
-
-        mListView.smoothScrollToPosition(mPosition);
+        updateEmptyView();
     }
 
     public void updateEmptyView() {
-        if (mForecastAdapter.getCount() == 0) {
-            TextView textView = (TextView) getView().findViewById(R.id.listview_forecast_empty);
+        if (mForecastAdapter.getItemCount() == 0) {
+            TextView textView = (TextView) getView().findViewById(R.id.recyclerview_forecast_empty);
             if (textView != null) {
                 int message = R.string.no_weather_info;
                 @SunshineSyncAdapter.LocationStatus int location = Utility.getLocationStauts(getActivity());

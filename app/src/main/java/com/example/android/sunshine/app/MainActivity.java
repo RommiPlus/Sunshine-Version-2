@@ -39,10 +39,9 @@ public class MainActivity extends AppCompatActivity implements DetailFragment.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
 
         if (findViewById(R.id.weather_detail_container) != null) {
             mTwoPane = true;
@@ -90,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements DetailFragment.On
         }
         return super.onOptionsItemSelected(item);
     }
-
 
 
     @Override
