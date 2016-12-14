@@ -15,8 +15,10 @@
  */
 package com.example.android.sunshine.app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,6 +29,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -34,6 +37,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.AbsListView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -82,14 +87,15 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     static final int COL_COORD_LAT = 8;
     static final int COL_COORD_LONG = 9;
 
-    private static final String SCROLL_POSITION = "SCROLL_POSITION";
+    private static final String SELECTED_KEY = "SELECTED_KEY";
     private static final String LOG_TAG = ForecastFragment.class.getSimpleName();
 
     private ForecastAdapter mForecastAdapter;
     private RecyclerView mRecyclerView;
     private int mPosition = RecyclerView.NO_POSITION;
-    private boolean mIsUseTodayLayout;
+    private boolean mUseTodayLayout, mAutoSelectView;
     private boolean mIsFirstLoad = true;
+    private int mChoiceMode;
 
     public ForecastFragment() {
     }
@@ -97,7 +103,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public static final String TAG = ForecastFragment.class.getSimpleName();
 
     public void setUseTodayLayout(boolean isTrue) {
-        mIsUseTodayLayout = isTrue;
+        mUseTodayLayout = isTrue;
 
         if (mForecastAdapter != null) {
             mForecastAdapter.setUseTodayLayout(isTrue);
@@ -152,6 +158,16 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
+    public void onInflate(Activity activity, AttributeSet attrs, Bundle savedInstanceState) {
+        super.onInflate(activity, attrs, savedInstanceState);
+        TypedArray a = activity.obtainStyledAttributes(attrs, R.styleable.ForecastFragment,
+                0, 0);
+        mChoiceMode = a.getInt(R.styleable.ForecastFragment_android_choiceMode, AbsListView.CHOICE_MODE_NONE);
+        mAutoSelectView = a.getBoolean(R.styleable.ForecastFragment_autoSelectView, false);
+        a.recycle();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
@@ -166,15 +182,19 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mRecyclerView.setHasFixedSize(true);
 
         // The CursorAdapter will take data from our cursor and populate the ListView.
-        mForecastAdapter = new ForecastAdapter(getActivity(), null, mListener, emptyView);
-        mForecastAdapter.setUseTodayLayout(mIsUseTodayLayout);
+        mForecastAdapter = new ForecastAdapter(getActivity(), null, mListener, emptyView, mChoiceMode);
+        mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
 
         // Get a reference to the ListView, and attach this adapter to it.
         mRecyclerView.setAdapter(mForecastAdapter);
 
-        if (savedInstanceState != null && savedInstanceState.containsKey(SCROLL_POSITION)) {
-            mPosition = savedInstanceState.getInt(SCROLL_POSITION);
-            Log.v(TAG, "mPosition: " + mPosition);
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(SELECTED_KEY)) {
+                // The Recycler View probably hasn't even been populated yet.  Actually perform the
+                // swapout in onLoadFinished.
+                mPosition = savedInstanceState.getInt(SELECTED_KEY);
+            }
+            mForecastAdapter.onRestoreInstanceState(savedInstanceState);
         }
 
         return rootView;
@@ -204,8 +224,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (mPosition != ListView.INVALID_POSITION) {
-            outState.putInt(SCROLL_POSITION, mPosition);
+            outState.putInt(SELECTED_KEY, mPosition);
         }
+        mForecastAdapter.onSaveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
 
@@ -258,8 +279,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        mForecastAdapter.swapCursor(cursor)
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor data) {
+        mForecastAdapter.swapCursor(data)
         ;
         if (mPosition != RecyclerView.NO_POSITION) {
             // If we don't need to restart the loader, and there's a desired position to restore
@@ -268,6 +289,28 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
 
         updateEmptyView();
+
+        if (data.getCount() > 0) {
+            mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    // Since we know we're going to get items, we keep the listener around until
+                    // we see Children.
+                    if (mRecyclerView.getChildCount() > 0) {
+                        mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                        int itemPosition = mForecastAdapter.getSelectedItemPosition();
+                        if (RecyclerView.NO_POSITION == itemPosition) itemPosition = 0;
+                        RecyclerView.ViewHolder vh = mRecyclerView.findViewHolderForAdapterPosition(itemPosition);
+                        if (null != vh && mAutoSelectView) {
+                            mForecastAdapter.selectView(vh);
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
+
     }
 
     public void updateEmptyView() {

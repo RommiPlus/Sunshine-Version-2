@@ -41,10 +41,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/sunshine_logo_imageview"
-        app:cardPreventCornerOverlap="false"
-        app:cardElevation="@dimen/detail_card_elevation"
+        android:layout_marginEnd="@dimen/abc_list_item_padding_horizontal_material"
         android:layout_marginStart="@dimen/abc_list_item_padding_horizontal_material"
-        android:layout_marginEnd="@dimen/abc_list_item_padding_horizontal_material" />
+        app:cardElevation="@dimen/detail_card_elevation"
+        app:cardPreventCornerOverlap="false" />
 
     <fragment
         android:id="@id/fragment_forecast"
@@ -52,6 +52,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/weather_detail_container"
+        android:choiceMode="singleChoice"
+        app:autoSelectView="true"
         tools:layout="@android:layout/list_content" />
 
 </RelativeLayout>

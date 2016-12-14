@@ -2,6 +2,7 @@ package com.example.android.sunshine.app;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +27,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
     private Context mContext;
     private Cursor mCursor;
     private TextView mEmptyView;
+    final private ItemChoiceManager mICM;
     private ForecastAdapterOnClickHandler mListener;
 
     public static interface ForecastAdapterOnClickHandler {
@@ -34,11 +36,14 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
 
     public ForecastAdapter(Context context, Cursor cursor,
                            ForecastAdapterOnClickHandler clickHandler,
-                           TextView emptyView) {
+                           TextView emptyView,
+                           int choiceMode) {
         mContext = context;
         mCursor = cursor;
         mEmptyView = emptyView;
         mListener = clickHandler;
+        mICM = new ItemChoiceManager(this);
+        mICM.setChoiceMode(choiceMode);
     }
 
     private boolean mIsUseTodayLayout;
@@ -78,7 +83,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
     }
 
     @Override
-    public void onBindViewHolder(ForecastAdapterViewHolder holder, int position) {
+    public void onBindViewHolder(ForecastAdapterViewHolder forecastAdapterViewHolder, int position) {
         mCursor.moveToPosition(position);
 
         int weatherId = mCursor.getInt(ForecastFragment.COL_WEATHER_ID);
@@ -93,26 +98,26 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
         }
 
         if (Utility.usingLocalGraphics(mContext)) {
-            holder.mIconView.
+            forecastAdapterViewHolder.mIconView.
                     setImageResource(defaultImage);
         } else {
             Glide.with(mContext)
                     .load(Utility.getArtUrlForWeatherCondition(mContext, weatherId))
                     .error(defaultImage)
                     .crossFade()
-                    .into(holder.mIconView);
+                    .into(forecastAdapterViewHolder.mIconView);
         }
 
         // Read date from cursor
         long dateInMillis = mCursor.getLong(COL_WEATHER_DATE);
         // Find TextView and set formatted date on it
-        holder.mDateView.setText(Utility.getFriendlyDayString(mContext, dateInMillis));
+        forecastAdapterViewHolder.mDateView.setText(Utility.getFriendlyDayString(mContext, dateInMillis));
 
         // Read weather forecast from cursor
         String description = mCursor.getString(ForecastFragment.COL_WEATHER_DESC);
         // Find TextView and set weather forecast on it
-        holder.mDescriptionView.setText(description);
-        holder.mDescriptionView.setContentDescription(mContext.getString(R.string.a11y_forecast, description));
+        forecastAdapterViewHolder.mDescriptionView.setText(description);
+        forecastAdapterViewHolder.mDescriptionView.setContentDescription(mContext.getString(R.string.a11y_forecast, description));
 
         // Read user preference for metric or imperial temperature units
         boolean isMetric = Utility.isMetric(mContext);
@@ -120,14 +125,36 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
         // Read high temperature from cursor
         double high = mCursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);
         String highString = Utility.formatTemperature(mContext, high, isMetric);
-        holder.mHighTempView.setText(highString);
-        holder.mHighTempView.setContentDescription(mContext.getString(R.string.a11y_high_temp, highString));
+        forecastAdapterViewHolder.mHighTempView.setText(highString);
+        forecastAdapterViewHolder.mHighTempView.setContentDescription(mContext.getString(R.string.a11y_high_temp, highString));
 
         // Read low temperature from cursor
         double low = mCursor.getDouble(ForecastFragment.COL_WEATHER_MIN_TEMP);
         String lowString = Utility.formatTemperature(mContext, low, isMetric);
-        holder.mLowTempView.setText(lowString);
-        holder.mLowTempView.setContentDescription(mContext.getString(R.string.a11y_low_temp, lowString));
+        forecastAdapterViewHolder.mLowTempView.setText(lowString);
+        forecastAdapterViewHolder.mLowTempView.setContentDescription(mContext.getString(R.string.a11y_low_temp, lowString));
+
+        mICM.onBindViewHolder(forecastAdapterViewHolder, position);
+    }
+
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        mICM.onRestoreInstanceState(savedInstanceState);
+    }
+
+    public void onSaveInstanceState(Bundle outState) {
+        mICM.onSaveInstanceState(outState);
+    }
+
+    public int getSelectedItemPosition() {
+        return mICM.getSelectedItemPosition();
+    }
+
+
+    public void selectView(RecyclerView.ViewHolder viewHolder) {
+        if (viewHolder instanceof ForecastAdapterViewHolder) {
+            ForecastAdapterViewHolder vfh = (ForecastAdapterViewHolder) viewHolder;
+            vfh.onClick(vfh.itemView);
+        }
     }
 
     @Override
@@ -165,6 +192,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
         public void onClick(View v) {
             mCursor.moveToPosition(getAdapterPosition());
             mListener.onClick(mCursor.getLong(COL_WEATHER_DATE), this);
+            mICM.onClick(this);
         }
     }
 }
