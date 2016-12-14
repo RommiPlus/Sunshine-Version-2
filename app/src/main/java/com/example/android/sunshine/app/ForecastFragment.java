@@ -21,6 +21,7 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -39,6 +40,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -173,6 +175,24 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview_forecast);
 
+        final LinearLayout parallaxView = (LinearLayout) rootView.findViewById(R.id.parallax_bar);
+        if (parallaxView != null && Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD) {
+            mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    int max = parallaxView.getHeight();
+                    // dy = start position - end position.
+                    if (dy > 0) {
+                        // Scroll up
+                        parallaxView.setTranslationY(Math.max(-max, parallaxView.getTranslationY() - dy / 2));
+                    } else {
+                        // Scroll down
+                        parallaxView.setTranslationY(Math.min(0, parallaxView.getTranslationY() - dy / 2));
+                    }
+                }
+            });
+        }
+
         // Set the layout manager
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         TextView emptyView = (TextView) rootView.findViewById(R.id.recyclerview_forecast_empty);
@@ -191,7 +211,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey(SELECTED_KEY)) {
                 // The Recycler View probably hasn't even been populated yet.  Actually perform the
-                // swapout in onLoadFinished.
+                // swap out in onLoadFinished.
                 mPosition = savedInstanceState.getInt(SELECTED_KEY);
             }
             mForecastAdapter.onRestoreInstanceState(savedInstanceState);
@@ -219,6 +239,14 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         sp.unregisterOnSharedPreferenceChangeListener(this);
         super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mRecyclerView != null) {
+            mRecyclerView.clearOnScrollListeners();
+        }
     }
 
     @Override
