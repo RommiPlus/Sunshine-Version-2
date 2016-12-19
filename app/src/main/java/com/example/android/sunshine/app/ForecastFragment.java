@@ -98,6 +98,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private boolean mUseTodayLayout, mAutoSelectView;
     private boolean mIsFirstLoad = true;
     private int mChoiceMode;
+    private boolean mHoldForTransition;
 
     public ForecastFragment() {
     }
@@ -125,10 +126,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                     locationSetting, date);
 
             if (mIsFirstLoad) {
-                ((DetailFragment.OnClickItemChangedListener) getActivity()).onNewDataReady(dataUri);
+                ((DetailFragment.OnClickItemChangedListener) getActivity()).onNewDataReady(dataUri, viewHolder);
                 mIsFirstLoad = false;
             } else {
-                ((DetailFragment.OnClickItemChangedListener) getActivity()).onClickItem(dataUri);
+                ((DetailFragment.OnClickItemChangedListener) getActivity()).onClickItem(dataUri, viewHolder);
             }
         }
     };
@@ -147,6 +148,17 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
+    public void onInflate(Activity activity, AttributeSet attrs, Bundle savedInstanceState) {
+        super.onInflate(activity, attrs, savedInstanceState);
+        TypedArray a = activity.obtainStyledAttributes(attrs, R.styleable.ForecastFragment,
+                0, 0);
+        mChoiceMode = a.getInt(R.styleable.ForecastFragment_android_choiceMode, AbsListView.CHOICE_MODE_NONE);
+        mAutoSelectView = a.getBoolean(R.styleable.ForecastFragment_autoSelectView, false);
+        mHoldForTransition = a.getBoolean(R.styleable.ForecastFragment_sharedElementTransitions, false);
+        a.recycle();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -157,16 +169,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onInflate(Activity activity, AttributeSet attrs, Bundle savedInstanceState) {
-        super.onInflate(activity, attrs, savedInstanceState);
-        TypedArray a = activity.obtainStyledAttributes(attrs, R.styleable.ForecastFragment,
-                0, 0);
-        mChoiceMode = a.getInt(R.styleable.ForecastFragment_android_choiceMode, AbsListView.CHOICE_MODE_NONE);
-        mAutoSelectView = a.getBoolean(R.styleable.ForecastFragment_autoSelectView, false);
-        a.recycle();
     }
 
     @Override
@@ -222,6 +224,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        // We hold for transition here just in-case the activity
+        // needs to be re-created. In a standard return transition,
+        // this doesn't actually make a difference.
+        if (mHoldForTransition) {
+            getActivity().supportPostponeEnterTransition();
+        }
         getLoaderManager().initLoader(FORECAST_LOADER, null, this);
         setRetainInstance(true);
         super.onActivityCreated(savedInstanceState);
@@ -317,8 +325,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
 
         updateEmptyView();
-
-        if (data.getCount() > 0) {
+        if (data.getCount() == 0) {
+            getActivity().supportStartPostponedEnterTransition();
+        } else {
             mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
                 @Override
                 public boolean onPreDraw() {
@@ -331,6 +340,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                         RecyclerView.ViewHolder vh = mRecyclerView.findViewHolderForAdapterPosition(itemPosition);
                         if (null != vh && mAutoSelectView) {
                             mForecastAdapter.selectView(vh);
+                        }
+
+                        if (mHoldForTransition) {
+                            getActivity().supportStartPostponedEnterTransition();
                         }
                         return true;
                     }

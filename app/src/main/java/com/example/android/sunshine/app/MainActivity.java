@@ -18,10 +18,15 @@ package com.example.android.sunshine.app;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 
@@ -111,24 +116,42 @@ public class MainActivity extends AppCompatActivity implements DetailFragment.On
     }
 
     @Override
-    public void onClickItem(Uri data) {
+    public void onClickItem(Uri data, RecyclerView.ViewHolder viewHolder) {
+        if (mTwoPane) {
+            // In two-pane mode, show the detail view in this activity by
+            // adding or replacing the detail fragment using a
+            // fragment transaction.
+            Bundle args = new Bundle();
+            DetailFragment fragment = (DetailFragment)
+                    getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
+            fragment.setData(data);
+        } else {
+            ForecastAdapter.ForecastAdapterViewHolder
+                    holder = (ForecastAdapter.ForecastAdapterViewHolder) viewHolder;
+            Pair<View, String> pair = new Pair<>((View) holder.mIconView, getString(R.string.today_weather_info));
+            ActivityOptionsCompat compat = ActivityOptionsCompat.makeSceneTransitionAnimation(this, pair);
+
+            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+            intent.setData(data);
+            ActivityCompat.startActivity(this, intent, compat.toBundle());
+        }
+    }
+
+    @Override
+    public void onNewDataReady(Uri data, RecyclerView.ViewHolder viewHolder) {
         if (mTwoPane) {
             DetailFragment fragment = (DetailFragment)
                     getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
             fragment.setData(data);
         } else {
+            ForecastAdapter.ForecastAdapterViewHolder
+                    holder = (ForecastAdapter.ForecastAdapterViewHolder) viewHolder;
+            Pair<View, String> pair = new Pair<>((View) holder.mIconView, getString(R.string.today_weather_info));
+            ActivityOptionsCompat compat = ActivityOptionsCompat.makeSceneTransitionAnimation(this, pair);
+
             Intent intent = new Intent(MainActivity.this, DetailActivity.class);
             intent.setData(data);
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onNewDataReady(Uri data) {
-        if (mTwoPane) {
-            DetailFragment fragment = (DetailFragment)
-                    getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
-            fragment.setData(data);
+            ActivityCompat.startActivity(this, intent, compat.toBundle());
         }
     }
 }

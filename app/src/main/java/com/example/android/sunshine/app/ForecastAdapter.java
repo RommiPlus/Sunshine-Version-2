@@ -3,6 +3,7 @@ package com.example.android.sunshine.app;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -97,6 +98,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
                 defaultImage = Utility.getIconResourceForWeatherCondition(weatherId);
         }
 
+        ViewCompat.setTransitionName(forecastAdapterViewHolder.mIconView, "iconView" + position);
         if (Utility.usingLocalGraphics(mContext)) {
             forecastAdapterViewHolder.mIconView.
                     setImageResource(defaultImage);

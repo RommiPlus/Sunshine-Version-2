@@ -26,6 +26,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -96,15 +97,17 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private TextView mWindView;
     private TextView mPressureView;
     private Uri mUri;
+    private boolean mTransitionAnimation;
+    static final String DETAIL_TRANSITION_ANIMATION = "DTA";
 
     public DetailFragment() {
         setHasOptionsMenu(true);
     }
 
     public interface OnClickItemChangedListener {
-        public void onClickItem(Uri data);
+        public void onClickItem(Uri data, RecyclerView.ViewHolder viewHolder);
 
-        public void onNewDataReady(Uri data);
+        public void onNewDataReady(Uri data, RecyclerView.ViewHolder viewHolder);
     }
 
     void onLocationChanged(String newLocation) {
@@ -131,6 +134,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            mTransitionAnimation = arguments.getBoolean(DetailFragment.DETAIL_TRANSITION_ANIMATION, false);
+        }
+
         View rootView = inflater.inflate(R.layout.fragment_detail_start, container, false);
         mIconView = (ImageView) rootView.findViewById(R.id.detail_icon);
         mFriendlyDateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
@@ -255,7 +263,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
 
             // We need to start the enter transition after the data has loaded
-            if (activity instanceof DetailActivity) {
+            if (mTransitionAnimation) {
                 activity.supportStartPostponedEnterTransition();
 
                 if (null != toolbarView) {
@@ -272,6 +280,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     finishCreatingMenu(toolbarView.getMenu());
                 }
             }
+
         }
     }
 

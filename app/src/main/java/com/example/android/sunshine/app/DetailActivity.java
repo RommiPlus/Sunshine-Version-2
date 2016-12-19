@@ -31,13 +31,18 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
 
         if (savedInstanceState == null) {
+            Bundle arguments = new Bundle();
+            arguments.putBoolean(DetailFragment.DETAIL_TRANSITION_ANIMATION, true);
+
             DetailFragment fragment = new DetailFragment();
+            fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.weather_detail_container, fragment, MainActivity.DETAILFRAGMENT_TAG)
                     .commit();
         }
 
-        // enables the activity icon as a 'home' button. required if "android:targetSdkVersion" > 14
+        // Being here means we are in animation mode
+        supportPostponeEnterTransition();
     }
 
     @Override

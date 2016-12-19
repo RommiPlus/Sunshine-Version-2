@@ -34,7 +34,8 @@
         android:maxWidth="@dimen/today_icon"
         app:layout_columnWeight="1"
         app:layout_gravity="fill_horizontal"
-        tools:src="@drawable/art_clouds" />
+        tools:src="@drawable/art_clouds"
+        android:transitionName="@string/today_weather_info"/>
 
     <TextView
         android:id="@+id/detail_high_textview"
